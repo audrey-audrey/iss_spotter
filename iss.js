@@ -13,7 +13,7 @@ const request = require('request');
  *
  * @param {*} callback - to enter the error handling
  */
-const fetchMyIP = function(callback) {
+const fetchMyIP = (callback) => {
   // use request to fetch IP address from JSON API
   request('https://api.ipify.org/?format=json', function(error, response, body) {
     // error can be set if invalid domain, user is offline, etc.
@@ -38,4 +38,28 @@ const fetchMyIP = function(callback) {
   });
 };
 
-module.exports = { fetchMyIP };
+const fetchCoordByIP = (ip, callback) => {
+  // use request to fetch latitude and longitude
+  request(`http://ip-api.com/json/${ip}`, function(error, response, body) {
+    // error can be set if invalid domain, user is offline, etc.
+    if (error) {
+      callback(error, null);
+      return;
+    }
+    // if non-200 status, assume server error
+    if (response.statusCode !== 200) {
+      const msg = `Status Code ${response.statusCode} when fetching coordinates for IP. Response: ${body}`;
+       
+      callback(Error(msg), null); // => Error(...) creates new error that we can pass around
+      return;
+    }
+  
+    // if no errors return ip
+    const data = JSON.parse(body);
+    const result = {latitude: data.lat, longitude: data.lon};
+  
+    callback(null, result);
+  });
+};
+
+module.exports = { fetchMyIP, fetchCoordByIP };
